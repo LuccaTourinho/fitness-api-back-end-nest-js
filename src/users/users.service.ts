@@ -1,8 +1,9 @@
-import { Inject, Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { Inject, Injectable, HttpException} from '@nestjs/common';
 import { DATABASE_CONNECTION } from '../database/database-connection';
 import * as schema from './schema';
 import { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { eq } from 'drizzle-orm';
+import { Errors } from '../error/errors';
 
 @Injectable()
 export class UsersService {
@@ -21,11 +22,7 @@ export class UsersService {
                 password: user.password,
             }));
         }catch(error){
-            throw new HttpException({
-                status: HttpStatus.INTERNAL_SERVER_ERROR,
-                error: 'An error occurred while fetching users',
-                message: error.message,
-            }, HttpStatus.INTERNAL_SERVER_ERROR);
+            Errors.handleServerError('An error occurred while fetching users', error);
         }
     }
 
@@ -37,10 +34,7 @@ export class UsersService {
             });
 
             if(!user){
-                throw new HttpException({
-                    status: HttpStatus.NOT_FOUND,
-                    error: 'User not found',
-                }, HttpStatus.NOT_FOUND);
+                Errors.handleNotFoundError('User not found');
             }
 
             return {
@@ -58,16 +52,14 @@ export class UsersService {
                 throw error;
             }
 
-            throw new HttpException({
-                status: HttpStatus.INTERNAL_SERVER_ERROR,
-                error: 'An error occurred while fetching user',
-                message: error.message,
-            }, HttpStatus.INTERNAL_SERVER_ERROR);
+            Errors.handleServerError('An error occurred while fetching user', error);
         }
     }
 
     async updateUser(userId: number, user: Partial<typeof schema.users.$inferInsert>) {
         try{
+            await Errors.validateAndThrow(user);
+
             await this.database.transaction(async (tx) => {
                 const userData: Partial<typeof schema.users.$inferInsert> = {};
 
@@ -84,10 +76,7 @@ export class UsersService {
                                             });
 
                 if(updatedUser.length === 0){
-                    throw new HttpException({
-                        status: HttpStatus.NOT_FOUND,
-                        error: 'User not found',
-                    }, HttpStatus.NOT_FOUND);
+                    Errors.handleNotFoundError('User not found');
                 }
 
                 return updatedUser[0];
@@ -97,16 +86,14 @@ export class UsersService {
                 throw error;
             }
 
-            throw new HttpException({
-                status: HttpStatus.INTERNAL_SERVER_ERROR,
-                error: 'An error occurred while updating user',
-                message: error.message,
-            }, HttpStatus.INTERNAL_SERVER_ERROR);
+            Errors.handleServerError('An error occurred while updating user', error);
         }
     }
 
     async updateProfile(profileId: number, profile: Partial<typeof schema.profiles.$inferInsert>) {
         try{
+            await Errors.validateAndThrow(profile);
+
             await this.database.transaction(async (tx) => {
                 const profileData: Partial<typeof schema.profiles.$inferInsert> = {};
 
@@ -125,10 +112,7 @@ export class UsersService {
                                                 });
 
                 if(updatedProfile.length === 0){
-                    throw new HttpException({
-                        status: HttpStatus.NOT_FOUND,
-                        error: 'Profile not found',
-                    }, HttpStatus.NOT_FOUND);
+                    Errors.handleNotFoundError('Profile not found');
                 }
 
                 return updatedProfile[0];
@@ -138,16 +122,14 @@ export class UsersService {
                 throw error;
             }
 
-            throw new HttpException({
-                status: HttpStatus.INTERNAL_SERVER_ERROR,
-                error: 'An error occurred while updating profile',
-                message: error.message,
-            }, HttpStatus.INTERNAL_SERVER_ERROR);
+            Errors.handleServerError('An error occurred while updating profile', error);
         }
     }
 
     async createUser(user: typeof schema.users.$inferInsert) {
         try{
+            await Errors.validateAndThrow(user);
+
             return await this.database.transaction(async (tx) => {
                 const createdUser = await tx.insert(schema.users).values(user).returning({
                     id: schema.users.id,
@@ -156,10 +138,7 @@ export class UsersService {
                 });
 
                 if(!createdUser){
-                    throw new HttpException({
-                        status: HttpStatus.BAD_REQUEST,
-                        error: 'An error occurred while creating user',
-                    }, HttpStatus.BAD_REQUEST);
+                    Errors.handleBadRequest('An error occurred while creating user');
                 }
 
                 return createdUser;
@@ -169,16 +148,14 @@ export class UsersService {
                 throw error;
             }
 
-            throw new HttpException({
-                status: HttpStatus.INTERNAL_SERVER_ERROR,
-                error: 'An error occurred while creating user',
-                message: error.message,
-            }, HttpStatus.INTERNAL_SERVER_ERROR);
+            Errors.handleServerError('An error occurred while creating user', error);
         }
     }
 
     async createProfile(profile: typeof schema.profiles.$inferInsert) {
         try{
+            await Errors.validateAndThrow(profile);
+
             return await this.database.transaction(async (tx) => {
                const createdProfile = await tx.insert(schema.profiles).values(profile).returning({
                    id: schema.profiles.id,
@@ -188,10 +165,7 @@ export class UsersService {
                }); 
 
                if(!createdProfile){
-                   throw new HttpException({
-                       status: HttpStatus.BAD_REQUEST,
-                       error: 'An error occurred while creating profile',
-                   }, HttpStatus.BAD_REQUEST);
+                   Errors.handleBadRequest('An error occurred while creating profile');
                }
 
                return createdProfile;
@@ -201,11 +175,7 @@ export class UsersService {
                 throw error;
             }
 
-            throw new HttpException({
-                status: HttpStatus.INTERNAL_SERVER_ERROR,
-                error: 'An error occurred while creating profile',
-                message: error.message,
-            }, HttpStatus.INTERNAL_SERVER_ERROR);
+            Errors.handleServerError('An error occurred while creating profile', error);
         }
     }
 
@@ -217,10 +187,7 @@ export class UsersService {
             });
 
             if(!profile){
-                throw new HttpException({
-                    status: HttpStatus.NOT_FOUND,
-                    error: 'Profile not found',
-                }, HttpStatus.NOT_FOUND);
+                Errors.handleNotFoundError('Profile not found');
             }
 
             return {
@@ -238,11 +205,7 @@ export class UsersService {
                 throw error;
             }
 
-            throw new HttpException({
-                status: HttpStatus.INTERNAL_SERVER_ERROR,
-                error: 'An error occurred while fetching profile',
-                message: error.message,
-            }, HttpStatus.INTERNAL_SERVER_ERROR);
+            Errors.handleServerError('An error occurred while fetching profile', error);
         }
     }
 }

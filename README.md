@@ -30,6 +30,7 @@
 
 ```bash
 $ npm install
+$ npm install class-validator class-transformer
 ```
 
 ## Compile and run the project
@@ -56,6 +57,10 @@ $ npm run test:e2e
 
 # test coverage
 $ npm run test:cov
+
+#test exemple
+$ npx jest --config=jest.config.ts src/users/users.controller.spec.ts
+
 ```
 
 ## Resources
